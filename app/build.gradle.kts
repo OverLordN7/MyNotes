@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -17,6 +18,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -66,4 +71,30 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    //DJ for ViewModel factory
+    implementation("androidx.activity:activity-ktx:1.7.1")
+
+    //Navigation
+    implementation("androidx.navigation:navigation-compose:2.5.3")
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+
+    //Room
+    implementation("androidx.room:room-runtime:2.5.1")
+    annotationProcessor("androidx.room:room-compiler:2.5.1")
+    //ksp ("androidx.room:room-compiler:2.5.1")
+    //ksp("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.5.1")
+    implementation ("androidx.room:room-ktx:2.5.1")
+
+    //Extended icons
+    implementation ("androidx.compose.material:material-icons-extended:1.5.4")
+
+    //RichText dependency
+    implementation("androidx.compose.ui:ui-text:1.5.4")
+
 }
