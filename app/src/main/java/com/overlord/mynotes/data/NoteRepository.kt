@@ -30,7 +30,8 @@ class DefaultNoteRepository(
         noteDao.updateNote(
             noteId = note.id,
             title = note.title,
-            description = note.description
+            description = note.description,
+            isSelected = note.isSelected
         )
     }
 

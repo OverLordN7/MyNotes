@@ -16,8 +16,8 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE id = CAST(:noteId AS BLOB)")
     fun deleteNote(noteId: UUID)
 
-    @Query("UPDATE notes SET title = :title, description= :description WHERE id = CAST(:noteId AS BLOB)")
-    fun updateNote(noteId: UUID, title: String?,description: String? )
+    @Query("UPDATE notes SET title = :title, description= :description, isSelected= :isSelected  WHERE id = CAST(:noteId AS BLOB)")
+    fun updateNote(noteId: UUID, title: String?,description: String?, isSelected: Boolean )
 
     @Query("SELECT * FROM notes WHERE id = CAST(:noteId AS BLOB)")
     fun getNote(noteId: UUID): Note

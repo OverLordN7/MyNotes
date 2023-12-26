@@ -12,5 +12,7 @@ data class Note (
     @ColumnInfo(name = "title", defaultValue = "")
     var title: String?,
     @ColumnInfo(name = "description", defaultValue = "")
-    var description: String?
+    var description: String?,
+    @ColumnInfo(name = "isSelected", defaultValue = "false")
+    var isSelected: Boolean = false,
 )

@@ -27,39 +27,16 @@ sealed interface NotesUIState{
 
     object Loading: NotesUIState
 }
-
-sealed interface SingleNoteUIState{
-    data class Success(var note: Note):SingleNoteUIState
-
-    data class Error(var errorMessage: Exception): SingleNoteUIState
-
-    object Loading: SingleNoteUIState
-}
-
 class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
 
     var notesUIState: NotesUIState by mutableStateOf(NotesUIState.Loading)
 
-    var singleNoteUIState: SingleNoteUIState by mutableStateOf(SingleNoteUIState.Loading)
-
     var currentId: UUID by mutableStateOf(UUID.randomUUID())
 
-    var currentNote: Note by mutableStateOf(Note(title = null, description = null))
-
-    var noteList: List<Note> by mutableStateOf(emptyList())
+    private var noteList: List<Note> by mutableStateOf(emptyList())
 
 
-    init {
-        Log.d(TAG,"VM is alive and functional")
-
-        getNotes()
-
-//        saveNote(Note(
-//            title = "aAA",
-//            description = " AAAFf"
-//        ))
-
-    }
+    init { getNotes() }
 
     private suspend fun getAllNotes(): List<Note>{
         return withContext(Dispatchers.IO){
@@ -67,10 +44,11 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
         }
     }
 
-    fun getNotes(){
+    private fun getNotes(){
         viewModelScope.launch {
             notesUIState = NotesUIState.Loading
             notesUIState = try{
+                //make a copy of notes
                 noteList = getAllNotes()
                 NotesUIState.Success(getAllNotes())
             }catch (e: Exception){
@@ -78,34 +56,10 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
             }
         }
     }
-
-    suspend fun getNoteById(noteId: UUID): Note {
-        return withContext(Dispatchers.IO){
-            noteRepository.getNote(noteId)
-        }
-    }
-
-    fun getNoteFromId(noteId: UUID?): Note? {
-        return noteList.find { it.id == noteId }
-    }
-
-    fun getNote(noteId: UUID){
-        viewModelScope.launch {
-            singleNoteUIState = SingleNoteUIState.Loading
-            singleNoteUIState = try {
-                SingleNoteUIState.Success(getNoteById(noteId))
-            }catch (e: Exception){
-                SingleNoteUIState.Error(e)
-            }
-        }
-    }
-
+    fun getNoteFromId(noteId: UUID?): Note? { return noteList.find { it.id == noteId } }
     fun saveNote(note: Note){
         viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                noteRepository.insertNote(note)
-            }
-
+            withContext(Dispatchers.IO){ noteRepository.insertNote(note) }
             //Refresh view
             getNotes()
         }
@@ -113,10 +67,7 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
 
     fun deleteNote(note: Note){
         viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                noteRepository.deleteNote(note)
-            }
-
+            withContext(Dispatchers.IO){ noteRepository.deleteNote(note) }
             //Refresh view
             getNotes()
         }
@@ -124,10 +75,7 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
 
     fun updateNote(note: Note){
         viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                noteRepository.updateNote(note)
-            }
-
+            withContext(Dispatchers.IO){ noteRepository.updateNote(note) }
             //Refresh view
             getNotes()
         }
