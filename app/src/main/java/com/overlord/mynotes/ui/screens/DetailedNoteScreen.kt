@@ -13,8 +13,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,7 +74,7 @@ fun DetailedNoteScreen(
             DetailedNoteView(
                 note = note!!,
                 onSave = {modifiedNote -> noteViewModel.updateNote(modifiedNote) },
-                onBack = { navController.popBackStack()}
+                onBack = { navController.popBackStack()},
             )
         }
     }
@@ -89,8 +89,6 @@ private fun DetailedNoteView(
     modifier: Modifier = Modifier
 ) {
 
-    var localNote = note
-
     //Keyboard controller
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -102,8 +100,8 @@ private fun DetailedNoteView(
     val context = LocalContext.current
     val toast = Toast.makeText(context, "In progress...", Toast.LENGTH_LONG)
 
-    var title by remember { mutableStateOf(localNote.title) }
-    var text by remember { mutableStateOf(localNote.description) }
+    var title by remember { mutableStateOf(note.title) }
+    var text by remember { mutableStateOf(note.description) }
 
 
     Column {
@@ -126,12 +124,9 @@ private fun DetailedNoteView(
                         modifier = Modifier.size(40.dp)
                     )
                 }
-                IconButton(onClick = {
-                    /*TODO add image to note*/
-                    toast.show()
-                }) {
+                IconButton(onClick = {/*TODO trash*/}) {
                     Icon(
-                        imageVector = Icons.Default.Image,
+                        imageVector = Icons.Default.Delete,
                         contentDescription = null,
                         modifier = Modifier.size(40.dp)
                     )
@@ -166,8 +161,8 @@ private fun DetailedNoteView(
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localNote.title = title
-                            onSave(localNote)
+                            note.title = title
+                            onSave(note)
                             focusManager.moveFocus(FocusDirection.Next)
                         },
                     ),
@@ -177,15 +172,15 @@ private fun DetailedNoteView(
                         .onFocusChanged { focusState ->
                             if (!focusState.isFocused) {
                                 // Save title when lose focus
-                                localNote.title = title
-                                onSave(localNote)
+                                note.title = title
+                                onSave(note)
                             }
                         }
                         .onKeyEvent {
                             if (it.key == Key.Back && it.type == KeyEventType.KeyDown) {
                                 // Catching 'Back' Action
-                                localNote.title = title
-                                onSave(localNote)
+                                note.title = title
+                                onSave(note)
                                 onBack()
                                 return@onKeyEvent true
                             }
@@ -216,8 +211,8 @@ private fun DetailedNoteView(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            localNote.description = text
-                            onSave(localNote)
+                            note.description = text
+                            onSave(note)
                             keyboardController?.hide()
                             focusManager.clearFocus()
                         }
@@ -230,15 +225,15 @@ private fun DetailedNoteView(
                         .onFocusChanged { focusState ->
                             if (!focusState.isFocused) {
                                 // Save title when lose focus
-                                localNote.description = text
-                                onSave(localNote)
+                                note.description = text
+                                onSave(note)
                             }
                         }
                         .onKeyEvent {
                             if (it.key == Key.Back && it.type == KeyEventType.KeyDown) {
                                 // Catching 'Back' Action
-                                localNote.description = text
-                                onSave(localNote)
+                                note.description = text
+                                onSave(note)
                                 onBack()
                                 return@onKeyEvent true
                             }

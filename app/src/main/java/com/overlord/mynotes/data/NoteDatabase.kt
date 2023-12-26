@@ -1,6 +1,7 @@
 package com.overlord.mynotes.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -11,7 +12,7 @@ import com.overlord.mynotes.model.Note
     entities = [
         Note::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class NoteDatabase : RoomDatabase(){
