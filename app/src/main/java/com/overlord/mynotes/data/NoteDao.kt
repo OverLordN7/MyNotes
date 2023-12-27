@@ -13,6 +13,9 @@ interface NoteDao {
     @Insert
     fun addNote(note: Note)
 
+    @Query("INSERT INTO notes (id,title,description,isSelected) VALUES (CAST(:id AS BLOB),:title,:description,:isSelected)")
+    fun addNoteAlternative(id: UUID, title: String?, description: String?,isSelected: Boolean)
+
     @Query("DELETE FROM notes WHERE id = CAST(:noteId AS BLOB)")
     fun deleteNote(noteId: UUID)
 
