@@ -101,4 +101,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.5.0")
     kapt ("androidx.room:room-compiler:2.5.0")
 
+    //State
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
+
 }

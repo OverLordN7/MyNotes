@@ -1,13 +1,12 @@
 package com.overlord.mynotes.ui.screens
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.overlord.mynotes.MyNotesApplication
@@ -22,9 +21,7 @@ private const val TAG = "NoteViewModel"
 
 sealed interface NotesUIState{
     data class Success(var notesList: List<Note>): NotesUIState
-
     data class Error(var errorMessage: Exception): NotesUIState
-
     object Loading: NotesUIState
 }
 class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
@@ -44,7 +41,7 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
         }
     }
 
-    private fun getNotes(){
+    fun getNotes(){
         viewModelScope.launch {
             notesUIState = NotesUIState.Loading
             notesUIState = try{
@@ -59,7 +56,9 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
     fun getNoteFromId(noteId: UUID?): Note? { return noteList.find { it.id == noteId } }
     fun saveNote(note: Note){
         viewModelScope.launch {
-            withContext(Dispatchers.IO){ noteRepository.insertNote(note) }
+            withContext(Dispatchers.IO){
+                noteRepository.insertNote(note)
+            }
             //Refresh view
             getNotes()
         }
@@ -73,16 +72,19 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
         }
     }
 
-    fun updateNote(note: Note){
-        viewModelScope.launch {
-            withContext(Dispatchers.IO){ noteRepository.updateNote(note) }
-            //Refresh view
-            getNotes()
-        }
+    fun isPresent(id: UUID): Boolean{
+        return noteList.any { it.id == id }
     }
 
-
-
+    fun updateNote(note: Note){
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                noteRepository.updateNote(note)
+            }
+        }
+            //Refresh view
+            getNotes()
+    }
 
     companion object{
         val Factory: ViewModelProvider.Factory = viewModelFactory {

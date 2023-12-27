@@ -25,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,33 +58,24 @@ import com.overlord.mynotes.model.Note
 import com.overlord.mynotes.ui.menu.MainAppBar
 
 @Composable
-fun DetailedNoteScreen(
+fun NewDetailedNoteScreen(
     navController: NavController,
     noteViewModel: NoteViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val noteId = noteViewModel.currentId
-    val note = noteViewModel.getNoteFromId(noteId)
 
-    Scaffold (
-        topBar = { MainAppBar(onNavigationClick = {}) }
-    ) {
+    val note = Note(title = "New Title", description = null)
+    noteViewModel.currentId = note.id
+
+    Scaffold (topBar = { MainAppBar(onNavigationClick = {}) }) {
         Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(it),
             color = MaterialTheme.colorScheme.background,
+            modifier = modifier.fillMaxSize().padding(it),
         ) {
-            DetailedNoteView(
-                note = note!!,
-                onSave = { modifiedNote ->
-                    if (noteViewModel.isPresent(modifiedNote.id)){
-                        noteViewModel.updateNote(modifiedNote)
-                    } else {
-                        noteViewModel.saveNote(modifiedNote)
-                    }
-                },
-                onBack = { navController.popBackStack() },
+            DetailedNoteView1(
+                note = note,
+                onSave = { modifiedNote -> noteViewModel.saveNote(modifiedNote) },
+                onBack = { navController.popBackStack()},
             )
         }
     }
@@ -90,13 +83,12 @@ fun DetailedNoteScreen(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun DetailedNoteView(
+fun DetailedNoteView1(
     note: Note,
     onSave: (Note) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     //Keyboard controller
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -181,7 +173,7 @@ fun DetailedNoteView(
                             if (!focusState.isFocused) {
                                 // Save title when lose focus
                                 note.title = title
-                                onSave(note)
+                                //onSave(note)
                             }
                         }
                         .onKeyEvent {
@@ -200,7 +192,9 @@ fun DetailedNoteView(
                 Divider(
                     color = Color.Gray,
                     thickness = 1.dp,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
                 )
 
                 //Description
@@ -232,7 +226,7 @@ fun DetailedNoteView(
                             if (!focusState.isFocused) {
                                 // Save title when lose focus
                                 note.description = text
-                                onSave(note)
+                                //onSave(note)
                             }
                         }
                         .onKeyEvent {
@@ -248,6 +242,6 @@ fun DetailedNoteView(
                 )
             }
         }
+
     }
 }
-

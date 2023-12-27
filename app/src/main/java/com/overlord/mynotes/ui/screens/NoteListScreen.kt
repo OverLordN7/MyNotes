@@ -28,6 +28,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -53,22 +56,12 @@ fun NoteListScreen(
     modifier: Modifier = Modifier
 ){
     val state: NotesUIState = noteViewModel.notesUIState
-    val context = LocalContext.current
 
     Scaffold (
         topBar = { MainAppBar(onNavigationClick = {}) },
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                val newNote = Note(title = "No title", description = null)
-                noteViewModel.saveNote(newNote)
-                noteViewModel.currentId = newNote.id
-
-                CoroutineScope(Dispatchers.Main).launch{
-                    delay(10)
-                    navController.navigate(Screen.DetailedNoteScreen.route)
-                }
-            }) {
+            FloatingActionButton(onClick = { navController.navigate(Screen.NewDetailedNoteScreen.route) }) {
                 Icon(
                     imageVector = Icons.Filled.Add,
                     contentDescription = null
@@ -194,7 +187,9 @@ fun Note(
                         if (showDeleteIcon.value){
                             IconButton(
                                 onClick = { onDelete(note) },
-                                modifier = Modifier.weight(0.5f).size(20.dp)
+                                modifier = Modifier
+                                    .weight(0.5f)
+                                    .size(20.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,

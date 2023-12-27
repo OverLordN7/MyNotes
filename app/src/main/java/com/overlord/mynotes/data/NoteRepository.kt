@@ -8,6 +8,8 @@ interface NoteRepository {
 
     suspend fun insertNote(note: Note)
 
+    suspend fun insertNoteAlternative(note:Note)
+
     suspend fun updateNote(note: Note)
 
     suspend fun deleteNote(note: Note)
@@ -24,6 +26,15 @@ class DefaultNoteRepository(
 
     override suspend fun insertNote(note: Note) {
         noteDao.addNote(note)
+    }
+
+    override suspend fun insertNoteAlternative(note: Note) {
+        noteDao.addNoteAlternative(
+            id = note.id,
+            title = note.title,
+            description = note.description,
+            isSelected = note.isSelected,
+        )
     }
 
     override suspend fun updateNote(note: Note) {

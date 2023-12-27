@@ -5,6 +5,8 @@ sealed class Screen (val route: String){
 
     object DetailedNoteScreen: Screen("detailed_note_screen")
 
+    object NewDetailedNoteScreen: Screen("new_detailed_note_screen")
+
     object Settings: Screen("settings")
 
     fun withArgs(vararg args: String): String{
