@@ -61,6 +61,8 @@ fun NoteListScreen(
     noteViewModel: NoteViewModel,
     modifier: Modifier = Modifier
 ){
+
+    //State attribute for receiving list of notes
     val state: NotesUIState = noteViewModel.notesUIState
 
     //Drawer attributes

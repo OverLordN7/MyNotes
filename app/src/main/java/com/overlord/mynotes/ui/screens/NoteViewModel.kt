@@ -1,5 +1,7 @@
 package com.overlord.mynotes.ui.screens
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -84,6 +86,17 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
         }
             //Refresh view
             getNotes()
+    }
+
+    fun shareNote(note: Note, context: Context){
+        viewModelScope.launch {
+            val message = "${note.title}\n${note.description}"
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.type = "text/plain"
+            intent.putExtra(Intent.EXTRA_SUBJECT,"share")
+            intent.putExtra(Intent.EXTRA_TEXT,message)
+            context.startActivity(Intent.createChooser(intent,"Share note with:"))
+        }
     }
 
     companion object{

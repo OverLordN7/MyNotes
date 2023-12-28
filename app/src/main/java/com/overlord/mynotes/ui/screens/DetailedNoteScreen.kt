@@ -78,6 +78,8 @@ fun DetailedNoteScreen(
     val noteId = noteViewModel.currentId
     val note = noteViewModel.getNoteFromId(noteId)
 
+    val context = LocalContext.current
+
     //Drawer attributes
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -127,6 +129,7 @@ fun DetailedNoteScreen(
                         }
                     },
                     onBack = { navController.popBackStack() },
+                    onShare = {noteViewModel.shareNote(note,context)}
                 )
             }
         }
@@ -139,6 +142,7 @@ fun DetailedNoteView(
     note: Note,
     onSave: (Note) -> Unit,
     onBack: () -> Unit,
+    onShare: (Note) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -184,10 +188,7 @@ fun DetailedNoteView(
                         modifier = Modifier.size(40.dp)
                     )
                 }
-                IconButton(onClick = {
-                    /*TODO sharing function*/
-                    toast.show()
-                }) {
+                IconButton(onClick = {onShare(note)}) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = null,
