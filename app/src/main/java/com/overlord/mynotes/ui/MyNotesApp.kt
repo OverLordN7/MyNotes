@@ -10,6 +10,7 @@ import com.overlord.mynotes.ui.screens.DetailedNoteScreen
 import com.overlord.mynotes.ui.screens.NewDetailedNoteScreen
 import com.overlord.mynotes.ui.screens.NoteListScreen
 import com.overlord.mynotes.ui.screens.NoteViewModel
+import com.overlord.mynotes.ui.screens.SettingsScreen
 
 @Composable
 fun MyNotesApp(){
@@ -38,6 +39,13 @@ fun MyNotesApp(){
         //Navigate to NewDetailedNotesScreen screen
         composable(route = Screen.NewDetailedNoteScreen.route){
             NewDetailedNoteScreen(
+                navController = navController,
+                noteViewModel = noteViewModel,
+            )
+        }
+
+        composable(route = Screen.Settings.route){
+            SettingsScreen(
                 navController = navController,
                 noteViewModel = noteViewModel,
             )

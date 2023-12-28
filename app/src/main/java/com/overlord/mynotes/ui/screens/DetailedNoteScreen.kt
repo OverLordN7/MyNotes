@@ -3,9 +3,11 @@ package com.overlord.mynotes.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,15 +21,25 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -53,7 +65,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.overlord.mynotes.model.Note
+import com.overlord.mynotes.model.drawerButtons
 import com.overlord.mynotes.ui.menu.MainAppBar
+import kotlinx.coroutines.launch
 
 @Composable
 fun DetailedNoteScreen(
@@ -64,26 +78,57 @@ fun DetailedNoteScreen(
     val noteId = noteViewModel.currentId
     val note = noteViewModel.getNoteFromId(noteId)
 
-    Scaffold (
-        topBar = { MainAppBar(onNavigationClick = {}) }
-    ) {
-        Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(it),
-            color = MaterialTheme.colorScheme.background,
+    //Drawer attributes
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
+
+    ModalNavigationDrawer(
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(modifier = Modifier.height(16.dp))
+                drawerButtons.forEachIndexed { index, drawerButton ->
+                    NavigationDrawerItem(
+                        label = { Text(text = drawerButton.title) },
+                        selected = index == selectedItemIndex,
+                        onClick = {
+                            navController.navigate(drawerButton.drawerOption)
+                            selectedItemIndex = index
+                            scope.launch {
+                                drawerState.close()
+                            }
+                        },
+                        icon = {
+                            Icon(imageVector = drawerButton.icon, contentDescription = null)
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                }
+            }
+        },
+        drawerState = drawerState
+    ){
+        Scaffold (
+            topBar = { MainAppBar(scope = scope, drawerState = drawerState) }
         ) {
-            DetailedNoteView(
-                note = note!!,
-                onSave = { modifiedNote ->
-                    if (noteViewModel.isPresent(modifiedNote.id)){
-                        noteViewModel.updateNote(modifiedNote)
-                    } else {
-                        noteViewModel.saveNote(modifiedNote)
-                    }
-                },
-                onBack = { navController.popBackStack() },
-            )
+            Surface(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(it),
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                DetailedNoteView(
+                    note = note!!,
+                    onSave = { modifiedNote ->
+                        if (noteViewModel.isPresent(modifiedNote.id)){
+                            noteViewModel.updateNote(modifiedNote)
+                        } else {
+                            noteViewModel.saveNote(modifiedNote)
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
 }

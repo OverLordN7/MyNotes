@@ -6,6 +6,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,33 +20,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.overlord.mynotes.model.Note
+import com.overlord.mynotes.model.drawerButtons
 import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.menu.MainAppBar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -57,75 +63,83 @@ fun NoteListScreen(
 ){
     val state: NotesUIState = noteViewModel.notesUIState
 
-    Scaffold (
-        topBar = { MainAppBar(onNavigationClick = {}) },
-        floatingActionButtonPosition = FabPosition.End,
-        floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate(Screen.NewDetailedNoteScreen.route) }) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = null
-                )
-            }
-        }
-    ) {
-        Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(it),
-            color = MaterialTheme.colorScheme.background,
-        ) {
-            when(state){
-                is NotesUIState.Loading ->{}
-                is NotesUIState.Error ->{}
-                is NotesUIState.Success ->{
-                    NoteGridView(
-                        notesList = state.notesList,
-                        onClick = {  noteId ->
-                        noteViewModel.currentId = noteId
-                        navController.navigate(Screen.DetailedNoteScreen.route)
+    //Drawer attributes
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
+
+    ModalNavigationDrawer(
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(modifier = Modifier.height(16.dp))
+                drawerButtons.forEachIndexed { index, drawerButton ->
+                    NavigationDrawerItem(
+                        label = { Text(text = drawerButton.title) },
+                        selected = index == selectedItemIndex,
+                        onClick = {
+                            navController.navigate(drawerButton.drawerOption)
+                            selectedItemIndex = index
+                            scope.launch {
+                                drawerState.close()
+                            }
                         },
-                        onDelete = {noteToDelete ->
-                            noteViewModel.deleteNote(noteToDelete)
-                        }
+                        icon = {
+                            Icon(imageVector = drawerButton.icon, contentDescription = null)
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
                 }
             }
+        },
+        drawerState = drawerState
+    ) {
 
+        Scaffold (
+            topBar = { MainAppBar(scope = scope, drawerState = drawerState) },
+            floatingActionButtonPosition = FabPosition.End,
+            floatingActionButton = {
+                FloatingActionButton(onClick = { navController.navigate(Screen.NewDetailedNoteScreen.route) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null
+                    )
+                }
+            }
+        ) {
+            Surface(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(it),
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                when(state){
+                    is NotesUIState.Loading ->{}
+                    is NotesUIState.Error ->{}
+                    is NotesUIState.Success ->{
+                        NoteGridView(
+                            notesList = state.notesList,
+                            onClick = {  noteId ->
+                                noteViewModel.currentId = noteId
+                                navController.navigate(Screen.DetailedNoteScreen.route)
+                            },
+                            onDelete = {noteToDelete ->
+                                noteViewModel.deleteNote(noteToDelete)
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
-
 }
 @Composable
 fun NoteGridView(
     notesList: List<Note>,
     onClick: (UUID) -> Unit,
     onDelete: (Note) -> Unit,
-    modifier: Modifier = Modifier){
-    
-    //val isToolBarVisible by remember { mutableStateOf(false) }
-
-
-    val context = LocalContext.current
-
-
+    modifier: Modifier = Modifier
+){
     Column {
-//        if (isToolBarVisible){
-//            Card(
-//                shape = RoundedCornerShape(0.dp),
-//                modifier = Modifier.fillMaxWidth(),
-//                )
-//            {
-//                Row(){
-//                    IconButton(onClick = { /*TODO Delete*/ }) {
-//                        Icon(imageVector = Icons.Default.Delete, contentDescription = null)
-//                    }
-//                    IconButton(onClick = {/*TODO Cancel*/ }) {
-//                        Icon(imageVector = Icons.Default.Cancel, contentDescription = null)
-//                    }
-//                }
-//            }
-//        }
         LazyVerticalGrid(
             columns = GridCells.Fixed(count = 2),
             modifier = modifier.padding(4.dp)
@@ -138,7 +152,6 @@ fun NoteGridView(
                     note = note,
                     onClick = onClick,
                     onDelete = onDelete
-
                 )
             }
         }
