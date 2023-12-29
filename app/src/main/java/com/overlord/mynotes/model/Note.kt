@@ -15,4 +15,6 @@ data class Note (
     var description: String?,
     @ColumnInfo(name = "isSelected", defaultValue = "false")
     var isSelected: Boolean = false,
+    @ColumnInfo(name = "creationTimeMillis")
+    val creationTimeMillis: Long = System.currentTimeMillis()
 )

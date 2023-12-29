@@ -29,8 +29,8 @@ sealed interface NotesUIState{
 class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
 
     var notesUIState: NotesUIState by mutableStateOf(NotesUIState.Loading)
-
-    var currentId: UUID by mutableStateOf(UUID.randomUUID())
+    var currentNote: Note by mutableStateOf(Note(title = "Generated Title", description = ""))
+    var isNewNote: Boolean by mutableStateOf(false)
 
     private var noteList: List<Note> by mutableStateOf(emptyList())
 
@@ -39,7 +39,8 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
 
     private suspend fun getAllNotes(): List<Note>{
         return withContext(Dispatchers.IO){
-            noteRepository.getAllNotes()
+            val unsortedNotes = noteRepository.getAllNotes()
+            return@withContext unsortedNotes.sortedBy { it.creationTimeMillis }.reversed()
         }
     }
 
@@ -48,14 +49,13 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
             notesUIState = NotesUIState.Loading
             notesUIState = try{
                 //make a copy of notes
-                noteList = getAllNotes()
+                //noteList = getAllNotes()
                 NotesUIState.Success(getAllNotes())
             }catch (e: Exception){
                 NotesUIState.Error(e)
             }
         }
     }
-    fun getNoteFromId(noteId: UUID?): Note? { return noteList.find { it.id == noteId } }
     fun saveNote(note: Note){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
@@ -72,10 +72,6 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
             //Refresh view
             getNotes()
         }
-    }
-
-    fun isPresent(id: UUID): Boolean{
-        return noteList.any { it.id == id }
     }
 
     fun updateNote(note: Note){

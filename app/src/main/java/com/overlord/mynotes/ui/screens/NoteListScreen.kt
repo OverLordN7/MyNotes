@@ -45,13 +45,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.overlord.mynotes.R
 import com.overlord.mynotes.model.Note
 import com.overlord.mynotes.model.drawerButtons
 import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.menu.MainAppBar
+import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -72,26 +78,12 @@ fun NoteListScreen(
 
     ModalNavigationDrawer(
         drawerContent = {
-            ModalDrawerSheet {
-                Spacer(modifier = Modifier.height(16.dp))
-                drawerButtons.forEachIndexed { index, drawerButton ->
-                    NavigationDrawerItem(
-                        label = { Text(text = drawerButton.title) },
-                        selected = index == selectedItemIndex,
-                        onClick = {
-                            navController.navigate(drawerButton.drawerOption)
-                            selectedItemIndex = index
-                            scope.launch {
-                                drawerState.close()
-                            }
-                        },
-                        icon = {
-                            Icon(imageVector = drawerButton.icon, contentDescription = null)
-                        },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
-                }
-            }
+            NoteModalDrawerSheet(
+                drawerState = drawerState,
+                scope = scope,
+                selectedItemIndex = selectedItemIndex,
+                navController = navController
+            )
         },
         drawerState = drawerState
     ) {
@@ -100,7 +92,12 @@ fun NoteListScreen(
             topBar = { MainAppBar(scope = scope, drawerState = drawerState) },
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
-                FloatingActionButton(onClick = { navController.navigate(Screen.NewDetailedNoteScreen.route) }) {
+                FloatingActionButton(onClick = {
+                    scope.launch {
+                        noteViewModel.isNewNote = true
+                        navController.navigate(Screen.DetailedNoteScreen.route)
+                    }
+                }) {
                     Icon(
                         imageVector = Icons.Filled.Add,
                         contentDescription = null
@@ -120,8 +117,10 @@ fun NoteListScreen(
                     is NotesUIState.Success ->{
                         NoteGridView(
                             notesList = state.notesList,
-                            onClick = {  noteId ->
-                                noteViewModel.currentId = noteId
+                            onClick = {  note ->
+                                //noteViewModel.currentId = noteId
+                                noteViewModel.currentNote = note
+                                noteViewModel.isNewNote = false
                                 navController.navigate(Screen.DetailedNoteScreen.route)
                             },
                             onDelete = {noteToDelete ->
@@ -137,7 +136,7 @@ fun NoteListScreen(
 @Composable
 fun NoteGridView(
     notesList: List<Note>,
-    onClick: (UUID) -> Unit,
+    onClick: (Note) -> Unit,
     onDelete: (Note) -> Unit,
     modifier: Modifier = Modifier
 ){
@@ -165,7 +164,7 @@ fun NoteGridView(
 fun Note(
     note: Note,
     modifier: Modifier = Modifier,
-    onClick: (UUID) -> Unit = {},
+    onClick: (Note) -> Unit = {},
     onDelete: (Note) -> Unit,
 ){
     val showDeleteIcon = remember { mutableStateOf(false) }
@@ -177,7 +176,7 @@ fun Note(
             .height(200.dp)
             .padding(4.dp)
             .combinedClickable(
-                onClick = { onClick(note.id) },
+                onClick = { onClick(note) },
                 onLongClick = { showDeleteIcon.value = !showDeleteIcon.value }
             )
     ) {

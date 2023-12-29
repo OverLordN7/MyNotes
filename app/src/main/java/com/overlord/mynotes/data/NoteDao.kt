@@ -2,6 +2,7 @@ package com.overlord.mynotes.data
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.overlord.mynotes.model.Note
 import java.util.UUID
@@ -10,7 +11,7 @@ interface NoteDao {
     @Query("SELECT * FROM notes")
     fun getAllNotes(): List<Note>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addNote(note: Note)
 
     @Query("INSERT INTO notes (id,title,description,isSelected) VALUES (CAST(:id AS BLOB),:title,:description,:isSelected)")
