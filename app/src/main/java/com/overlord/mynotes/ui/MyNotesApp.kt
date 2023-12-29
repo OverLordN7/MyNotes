@@ -7,9 +7,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.screens.DetailedNoteScreen
-import com.overlord.mynotes.ui.screens.NewDetailedNoteScreen
 import com.overlord.mynotes.ui.screens.NoteListScreen
 import com.overlord.mynotes.ui.screens.NoteViewModel
+import com.overlord.mynotes.ui.screens.SettingsScreen
 
 @Composable
 fun MyNotesApp(){
@@ -35,9 +35,9 @@ fun MyNotesApp(){
             )
         }
 
-        //Navigate to NewDetailedNotesScreen screen
-        composable(route = Screen.NewDetailedNoteScreen.route){
-            NewDetailedNoteScreen(
+        //Navigate to Settings screen
+        composable(route = Screen.Settings.route){
+            SettingsScreen(
                 navController = navController,
                 noteViewModel = noteViewModel,
             )
