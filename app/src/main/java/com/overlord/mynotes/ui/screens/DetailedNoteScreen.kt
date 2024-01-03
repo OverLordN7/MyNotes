@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +28,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -114,12 +116,12 @@ fun DetailedNoteScreen(
                 DetailedNoteView(
                     note = note,
                     onSave = { modifiedNote ->
-                             if (noteViewModel.isNewNote){
-                                 noteViewModel.saveNote(modifiedNote)
-                                 noteViewModel.isNewNote = false
-                             } else{
-                                 noteViewModel.updateNote(note)
-                             }
+                        if (noteViewModel.isNewNote){
+                            noteViewModel.saveNote(modifiedNote)
+                            noteViewModel.isNewNote = false
+                        } else{
+                            noteViewModel.updateNote(note)
+                        }
                     },
                     onBack = { navController.popBackStack() },
                     onShare = {noteViewModel.shareNote(note,context)}
@@ -173,7 +175,11 @@ fun DetailedNoteView(
 
                 SaveIcon(
                     isUnsavedChanges = isTitleModified || isDescriptionModified,
-                    onClick = { onSave(note) }
+                    onClick = {
+                        onSave(note)
+                        isTitleModified = false
+                        isDescriptionModified = false
+                    }
                 )
 
 
@@ -198,7 +204,10 @@ fun DetailedNoteView(
                         isTitleModified = true
                     },
                     singleLine = true,
-                    textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 30.sp),
+                    textStyle = if(isSystemInDarkTheme())
+                        LocalTextStyle.current.copy(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 30.sp)
+                        else
+                        LocalTextStyle.current.copy(color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 30.sp),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
                         autoCorrect = true,
@@ -208,8 +217,8 @@ fun DetailedNoteView(
                     keyboardActions = KeyboardActions(
                         onNext = {
                             note.title = title
-                            onSave(note)
                             isTitleModified = false
+                            onSave(note)
                             focusManager.moveFocus(FocusDirection.Next)
                         },
                     ),
@@ -220,16 +229,16 @@ fun DetailedNoteView(
                             if (!focusState.isFocused) {
                                 // Save title when lose focus
                                 note.title = title
-                                onSave(note)
                                 isTitleModified = false
+                                onSave(note)
                             }
                         }
                         .onKeyEvent {
                             if (it.key == Key.Back && it.type == KeyEventType.KeyDown) {
                                 // Catching 'Back' Action
                                 note.title = title
-                                onSave(note)
                                 isTitleModified = false
+                                onSave(note)
                                 onBack()
                                 return@onKeyEvent true
                             }
@@ -254,21 +263,24 @@ fun DetailedNoteView(
                         isDescriptionModified = true
                     },
                     singleLine = false,
-                    textStyle = MaterialTheme.typography.bodyMedium,
+                    textStyle = if (isSystemInDarkTheme())
+                        LocalTextStyle.current.copy(color = Color.White)
+                        else
+                        LocalTextStyle.current.copy(color = Color.Black),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
                         autoCorrect = true,
                         keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
+                        imeAction = ImeAction.Default
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
                             note.description = text
-                            onSave(note)
                             isDescriptionModified = false
+                            onSave(note)
                             keyboardController?.hide()
                             focusManager.clearFocus()
-                        }
+                        },
                     ),
                     modifier = Modifier
                         .padding(4.dp)
@@ -279,16 +291,16 @@ fun DetailedNoteView(
                             if (!focusState.isFocused) {
                                 // Save title when lose focus
                                 note.description = text
-                                onSave(note)
                                 isDescriptionModified = false
+                                onSave(note)
                             }
                         }
                         .onKeyEvent {
                             if (it.key == Key.Back && it.type == KeyEventType.KeyDown) {
                                 // Catching 'Back' Action
                                 note.description = text
-                                onSave(note)
                                 isDescriptionModified = false
+                                onSave(note)
                                 onBack()
                                 return@onKeyEvent true
                             }
