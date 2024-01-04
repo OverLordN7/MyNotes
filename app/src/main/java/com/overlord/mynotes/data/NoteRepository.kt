@@ -1,5 +1,6 @@
 package com.overlord.mynotes.data
 
+import android.util.Log
 import com.overlord.mynotes.model.Note
 import java.util.UUID
 
@@ -16,7 +17,7 @@ interface NoteRepository {
 }
 
 class DefaultNoteRepository(
-    private val noteDao: NoteDao
+    private val noteDao: NoteDao,
 ): NoteRepository{
     override suspend fun getAllNotes(): List<Note> {
         return noteDao.getAllNotes()
@@ -42,5 +43,4 @@ class DefaultNoteRepository(
     override suspend fun getNote(noteId: UUID): Note {
         return noteDao.getNote(noteId)
     }
-
 }

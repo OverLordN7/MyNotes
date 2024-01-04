@@ -17,7 +17,6 @@ import com.overlord.mynotes.model.Note
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 private const val TAG = "NoteViewModel"
 
@@ -32,9 +31,6 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
     var currentNote: Note by mutableStateOf(Note(title = "Generated Title", description = ""))
     var isNewNote: Boolean by mutableStateOf(false)
 
-    private var noteList: List<Note> by mutableStateOf(emptyList())
-
-
     init { getNotes() }
 
     private suspend fun getAllNotes(): List<Note>{
@@ -44,12 +40,10 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
         }
     }
 
-    fun getNotes(){
+    private fun getNotes(){
         viewModelScope.launch {
             notesUIState = NotesUIState.Loading
             notesUIState = try{
-                //make a copy of notes
-                //noteList = getAllNotes()
                 NotesUIState.Success(getAllNotes())
             }catch (e: Exception){
                 NotesUIState.Error(e)
