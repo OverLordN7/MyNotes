@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -60,6 +63,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -70,6 +74,9 @@ import androidx.navigation.NavController
 import com.overlord.mynotes.model.Note
 import com.overlord.mynotes.ui.menu.MainAppBar
 import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private const val TAG = "DetailedNoteScreen"
 @Composable
@@ -155,6 +162,12 @@ fun DetailedNoteView(
     var isTitleModified by remember { mutableStateOf(false) }
     var isDescriptionModified by remember { mutableStateOf(false) }
 
+    //Format seconds to date
+    val creationDate = remember {
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+        dateFormat.format(Date(note.creationTimeMillis))
+    }
+
     Column {
         //tool panel
         Card(
@@ -181,15 +194,6 @@ fun DetailedNoteView(
                         isDescriptionModified = false
                     }
                 )
-
-
-//                IconButton(onClick = {onSave(note)}) {
-//                    Icon(
-//                        imageVector = Icons.Default.Save,
-//                        contentDescription = null,
-//                        modifier = Modifier.size(40.dp)
-//                    )
-//                }
             }
         }
 
@@ -244,6 +248,7 @@ fun DetailedNoteView(
                             }
                             false
                         }
+                        .weight(0.5f)
                 )
 
                 //Separate line
@@ -253,6 +258,7 @@ fun DetailedNoteView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
+                        //.weight(1f)
                 )
 
                 //Description
@@ -306,7 +312,15 @@ fun DetailedNoteView(
                             }
                             false
                         }
+                        .weight(6f)
                 )
+
+                Box(
+                    contentAlignment = Alignment.BottomEnd,
+                    modifier = Modifier.fillMaxWidth().padding(4.dp).weight(0.5f)
+                ) {
+                    Text(text = creationDate, fontStyle = FontStyle.Italic)
+                }
             }
         }
     }
