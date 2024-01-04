@@ -3,6 +3,7 @@ package com.overlord.mynotes.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -43,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -51,6 +54,9 @@ import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.menu.MainAppBar
 import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private const val TAG = "NoteListScreen"
 @Composable
@@ -104,7 +110,7 @@ fun NoteListScreen(
                 color = MaterialTheme.colorScheme.background,
             ) {
                 when(state){
-                    is NotesUIState.Loading ->{}
+                    is NotesUIState.Loading -> LoadingScreen()
                     is NotesUIState.Error ->{}
                     is NotesUIState.Success ->{
                         NoteGridView(
@@ -137,50 +143,54 @@ fun NoteGridView(
     val isToolPanelShown = remember { mutableStateOf(false) }
     val selectedNotes = remember { mutableStateListOf<Note>() }
 
-    Column {
-        if (isToolPanelShown.value){
-            Row(modifier = Modifier
-                .padding(4.dp)) {
-                Card(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(45.dp)) {
-                    IconButton(onClick = {
-                        //Try to delete all notes which are selected
-                        isToolPanelShown.value = false
-                        onDeleteList(selectedNotes)
-                        selectedNotes.clear()
+    if (notesList.isEmpty()){
+        EmptyScreen()
+    } else{
+        Column {
+            if (isToolPanelShown.value){
+                Row(modifier = Modifier
+                    .padding(4.dp)) {
+                    Card(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(45.dp)) {
+                        IconButton(onClick = {
+                            //Try to delete all notes which are selected
+                            isToolPanelShown.value = false
+                            onDeleteList(selectedNotes)
+                            selectedNotes.clear()
 
-                    }) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                        }) {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                        }
                     }
                 }
             }
-        }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(count = 2),
-            modifier = modifier.padding(4.dp)
-        ){
-            items(
-                items = notesList,
-                key = { note -> note.id }
-            ){ note ->
-                Note(
-                    note = note,
-                    checkboxState = isToolPanelShown.value,
-                    onClick = onClick,
-                    onLongClick = {
-                        //Show or hide tool panel
-                        isToolPanelShown.value = !isToolPanelShown.value
-                    },
-                    onCheckBoxChange = {
-                        if (selectedNotes.contains(it)){
-                            selectedNotes.remove(it)
-                        } else{
-                            selectedNotes.add(it)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(count = 2),
+                modifier = modifier.padding(4.dp)
+            ){
+                items(
+                    items = notesList,
+                    key = { note -> note.id }
+                ){ note ->
+                    Note(
+                        note = note,
+                        checkboxState = isToolPanelShown.value,
+                        onClick = onClick,
+                        onLongClick = {
+                            //Show or hide tool panel
+                            isToolPanelShown.value = !isToolPanelShown.value
+                        },
+                        onCheckBoxChange = {
+                            if (selectedNotes.contains(it)){
+                                selectedNotes.remove(it)
+                            } else{
+                                selectedNotes.add(it)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -198,6 +208,11 @@ fun Note(
 ){
     val checkboxValue = remember { mutableStateOf(false) }
 
+    val creationDate = remember {
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+        dateFormat.format(Date(note.creationTimeMillis))
+    }
+
     Card(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(8.dp),
@@ -212,7 +227,7 @@ fun Note(
     ) {
         Column {
             //Card Title
-            Row {
+            Row(modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = modifier
                         .background(MaterialTheme.colorScheme.primary)
@@ -235,7 +250,9 @@ fun Note(
                                     checkboxValue.value = it
                                     onCheckBoxChange(note)
                                 },
-                                modifier = Modifier.size(20.dp).weight(0.5f)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .weight(0.5f)
                             )
                         }
                     }
@@ -244,13 +261,41 @@ fun Note(
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .padding(4.dp)
+                .weight(5f)
             ) {
                 Text(
                     text = note.description ?: "",
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 6,
+                    maxLines = 5,
                 )
             }
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+                    .weight(1f)
+            ) {
+                Text(text = creationDate, fontStyle = FontStyle.Italic)
+            }
         }
+    }
+}
+
+@Composable
+fun EmptyScreen(modifier: Modifier = Modifier){
+    Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()){
+        Text(
+            text = "No notes to display\nTry '+' button, to add new Note",
+            color = if (isSystemInDarkTheme()) Color.White else Color.Black,
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
+@Composable
+fun LoadingScreen(modifier: Modifier = Modifier){
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
+        CircularProgressIndicator(modifier = Modifier.size(150.dp))
     }
 }
