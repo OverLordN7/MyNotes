@@ -12,7 +12,6 @@ class DefaultAppContainer(private val applicationContext: Context): AppContainer
     }
 
     private val noteDao by lazy { database.noteDao() }
-
     override val noteRepository: NoteRepository by lazy {
         DefaultNoteRepository(noteDao)
     }

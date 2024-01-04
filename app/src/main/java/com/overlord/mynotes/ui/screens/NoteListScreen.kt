@@ -6,7 +6,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,16 +19,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,30 +35,24 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.overlord.mynotes.R
 import com.overlord.mynotes.model.Note
-import com.overlord.mynotes.model.drawerButtons
 import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.menu.MainAppBar
 import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
 
+private const val TAG = "NoteListScreen"
 @Composable
 fun NoteListScreen(
     navController: NavController,
@@ -74,7 +66,7 @@ fun NoteListScreen(
     //Drawer attributes
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
+    val selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -118,13 +110,14 @@ fun NoteListScreen(
                         NoteGridView(
                             notesList = state.notesList,
                             onClick = {  note ->
-                                //noteViewModel.currentId = noteId
                                 noteViewModel.currentNote = note
                                 noteViewModel.isNewNote = false
                                 navController.navigate(Screen.DetailedNoteScreen.route)
                             },
-                            onDelete = {noteToDelete ->
-                                noteViewModel.deleteNote(noteToDelete)
+                            onDeleteList = {list->
+                                list.forEach { note->
+                                    noteViewModel.deleteNote(note)
+                                }
                             }
                         )
                     }
@@ -137,10 +130,33 @@ fun NoteListScreen(
 fun NoteGridView(
     notesList: List<Note>,
     onClick: (Note) -> Unit,
-    onDelete: (Note) -> Unit,
+    onDeleteList: (List<Note>) -> Unit,
     modifier: Modifier = Modifier
 ){
+    //Tool panel attribute
+    val isToolPanelShown = remember { mutableStateOf(false) }
+    val selectedNotes = remember { mutableStateListOf<Note>() }
+
     Column {
+        if (isToolPanelShown.value){
+            Row(modifier = Modifier
+                .padding(4.dp)) {
+                Card(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(45.dp)) {
+                    IconButton(onClick = {
+                        //Try to delete all notes which are selected
+                        isToolPanelShown.value = false
+                        onDeleteList(selectedNotes)
+                        selectedNotes.clear()
+
+                    }) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                    }
+                }
+            }
+        }
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(count = 2),
             modifier = modifier.padding(4.dp)
@@ -151,8 +167,19 @@ fun NoteGridView(
             ){ note ->
                 Note(
                     note = note,
+                    checkboxState = isToolPanelShown.value,
                     onClick = onClick,
-                    onDelete = onDelete
+                    onLongClick = {
+                        //Show or hide tool panel
+                        isToolPanelShown.value = !isToolPanelShown.value
+                    },
+                    onCheckBoxChange = {
+                        if (selectedNotes.contains(it)){
+                            selectedNotes.remove(it)
+                        } else{
+                            selectedNotes.add(it)
+                        }
+                    }
                 )
             }
         }
@@ -163,13 +190,16 @@ fun NoteGridView(
 @Composable
 fun Note(
     note: Note,
+    checkboxState: Boolean,
     modifier: Modifier = Modifier,
     onClick: (Note) -> Unit = {},
-    onDelete: (Note) -> Unit,
+    onLongClick: () -> Unit,
+    onCheckBoxChange: (Note) -> Unit,
 ){
-    val showDeleteIcon = remember { mutableStateOf(false) }
+    val checkboxValue = remember { mutableStateOf(false) }
 
     Card(
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxSize()
@@ -177,7 +207,7 @@ fun Note(
             .padding(4.dp)
             .combinedClickable(
                 onClick = { onClick(note) },
-                onLongClick = { showDeleteIcon.value = !showDeleteIcon.value }
+                onLongClick = onLongClick
             )
     ) {
         Column {
@@ -198,23 +228,18 @@ fun Note(
                             modifier = Modifier.weight(1.5f)
                         )
 
-                        if (showDeleteIcon.value){
-                            IconButton(
-                                onClick = { onDelete(note) },
-                                modifier = Modifier
-                                    .weight(0.5f)
-                                    .size(20.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                )
-                            }
+                        if (checkboxState){
+                            Checkbox(
+                                checked = checkboxValue.value,
+                                onCheckedChange = {
+                                    checkboxValue.value = it
+                                    onCheckBoxChange(note)
+                                },
+                                modifier = Modifier.size(20.dp).weight(0.5f)
+                            )
                         }
                     }
                 }
-
             }
             Box(modifier = Modifier
                 .fillMaxWidth()
