@@ -2,6 +2,7 @@ package com.overlord.mynotes.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,6 +16,8 @@ import com.overlord.mynotes.MyNotesApplication
 import com.overlord.mynotes.data.NoteRepository
 import com.overlord.mynotes.model.Note
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,13 +28,34 @@ sealed interface NotesUIState{
     data class Error(var errorMessage: Exception): NotesUIState
     object Loading: NotesUIState
 }
-class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
+class NoteViewModel(
+    private val noteRepository: NoteRepository,
+    application: MyNotesApplication,
+): ViewModel() {
 
     var notesUIState: NotesUIState by mutableStateOf(NotesUIState.Loading)
     var currentNote: Note by mutableStateOf(Note(title = "Generated Title", description = ""))
     var isNewNote: Boolean by mutableStateOf(false)
 
+    //Attributes of sharedPreferences
+    private val sharedPrefFileName = "my_pref_file_name"
+    private val themeKey = "theme_key"
+    private val sharedPreferences = application.getSharedPreferences(sharedPrefFileName, Context.MODE_PRIVATE)
+
+    private val _isDarkThemeEnabled = MutableStateFlow(isDarkThemeEnabled())
+    val isDarkThemeEnabled: StateFlow<Boolean> = _isDarkThemeEnabled
+
+
     init { getNotes() }
+
+    private fun isDarkThemeEnabled(): Boolean{
+        return sharedPreferences.getBoolean(themeKey,false)
+    }
+
+    fun setDarkThemeEnabled(isEnabled: Boolean){
+        _isDarkThemeEnabled.value = isEnabled
+        sharedPreferences.edit().putBoolean(themeKey,isEnabled).apply()
+    }
 
     private suspend fun getAllNotes(): List<Note>{
         return withContext(Dispatchers.IO){
@@ -94,7 +118,10 @@ class NoteViewModel(private val noteRepository: NoteRepository): ViewModel() {
             initializer {
                 val application = (this[APPLICATION_KEY] as MyNotesApplication)
                 val noteRepository = application.container.noteRepository
-                NoteViewModel(noteRepository)
+                NoteViewModel(
+                    noteRepository = noteRepository,
+                    application = application
+                )
             }
         }
     }
