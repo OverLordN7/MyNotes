@@ -80,7 +80,8 @@ fun NoteListScreen(
                 drawerState = drawerState,
                 scope = scope,
                 selectedItemIndex = selectedItemIndex,
-                navController = navController
+                navController = navController,
+                onItemSelected = {index -> noteViewModel.setSelectedIndex(index)}
             )
         },
         drawerState = drawerState

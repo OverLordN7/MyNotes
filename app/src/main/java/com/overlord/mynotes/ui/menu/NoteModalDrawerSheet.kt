@@ -36,10 +36,11 @@ fun NoteModalDrawerSheet (
     scope: CoroutineScope,
     selectedItemIndex: Int,
     navController: NavController,
+    onItemSelected: (Int) -> Unit,
 ){
     var selectedItemIndex1 by rememberSaveable { mutableIntStateOf(selectedItemIndex) }
 
-    ModalDrawerSheet {
+    ModalDrawerSheet{
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -59,6 +60,7 @@ fun NoteModalDrawerSheet (
                 selected = index == selectedItemIndex1,
                 onClick = {
                     navController.navigate(drawerButton.drawerOption)
+                    onItemSelected(index)
                     selectedItemIndex1 = index
                     scope.launch {
                         drawerState.close()

@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
@@ -62,7 +65,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -71,6 +73,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.overlord.mynotes.extra_composables.rememberImeState
 import com.overlord.mynotes.model.Note
 import com.overlord.mynotes.ui.menu.MainAppBar
 import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
@@ -98,7 +101,7 @@ fun DetailedNoteScreen(
     //Drawer attributes
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
+    val selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -106,7 +109,8 @@ fun DetailedNoteScreen(
                 drawerState = drawerState,
                 scope = scope,
                 selectedItemIndex = selectedItemIndex,
-                navController = navController
+                navController = navController,
+                onItemSelected = {index -> noteViewModel.setSelectedIndex(index)}
             )
         },
         drawerState = drawerState
@@ -168,6 +172,15 @@ fun DetailedNoteView(
         dateFormat.format(Date(note.creationTimeMillis))
     }
 
+    val imeState = rememberImeState()
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(imeState.value){
+        if (imeState.value){
+            scrollState.scrollTo(scrollState.maxValue)
+
+        }
+    }
     Column {
         //tool panel
         Card(
@@ -199,7 +212,9 @@ fun DetailedNoteView(
 
         //Main Body
         Card(modifier = modifier.padding(4.dp)) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 //Title
                 BasicTextField(
                     value = title ?: "",
@@ -248,7 +263,6 @@ fun DetailedNoteView(
                             }
                             false
                         }
-                        .weight(0.5f)
                 )
 
                 //Separate line
@@ -258,7 +272,6 @@ fun DetailedNoteView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
-                        //.weight(1f)
                 )
 
                 //Description
@@ -292,6 +305,8 @@ fun DetailedNoteView(
                         .padding(4.dp)
                         .fillMaxWidth()
                         .fillMaxHeight()
+                        .verticalScroll(scrollState)
+                        .imePadding()
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
                             if (!focusState.isFocused) {
@@ -317,7 +332,9 @@ fun DetailedNoteView(
 
                 Box(
                     contentAlignment = Alignment.BottomEnd,
-                    modifier = Modifier.fillMaxWidth().padding(4.dp).weight(0.5f)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp)
                 ) {
                     Text(text = creationDate, fontStyle = FontStyle.Italic)
                 }
@@ -357,6 +374,4 @@ fun SaveIcon(isUnsavedChanges: Boolean, onClick: () -> Unit) {
             )
         }
     }
-
-
 }
