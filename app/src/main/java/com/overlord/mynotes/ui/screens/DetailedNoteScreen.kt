@@ -101,7 +101,7 @@ fun DetailedNoteScreen(
     //Drawer attributes
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
+    val selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
     ModalNavigationDrawer(
         drawerContent = {
@@ -109,7 +109,8 @@ fun DetailedNoteScreen(
                 drawerState = drawerState,
                 scope = scope,
                 selectedItemIndex = selectedItemIndex,
-                navController = navController
+                navController = navController,
+                onItemSelected = {index -> noteViewModel.setSelectedIndex(index)}
             )
         },
         drawerState = drawerState

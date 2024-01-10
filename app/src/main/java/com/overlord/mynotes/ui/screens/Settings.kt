@@ -103,11 +103,12 @@ fun SettingsScreen(
             NoteModalDrawerSheet(
                 drawerState = drawerState,
                 scope = scope,
-                selectedItemIndex = selectedItemIndex,
-                navController = navController
+                selectedItemIndex = noteViewModel.selectedItemIndex.value,
+                navController = navController,
+                onItemSelected = {index -> noteViewModel.setSelectedIndex(index)}
             )
         },
-        drawerState = drawerState
+        drawerState = drawerState,
     ){
         Scaffold (topBar = { MainAppBar(scope = scope, drawerState = drawerState)}) {
             Surface(

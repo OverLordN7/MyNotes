@@ -2,9 +2,12 @@ package com.overlord.mynotes.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -64,6 +67,10 @@ class NoteViewModel(
 
     private val _notificationTimeMinutes = MutableStateFlow(getNotificationTimeMinutes())
     val notificationTimeMinutes: StateFlow<Int> = _notificationTimeMinutes
+
+    //Attribute for switching ModalNavigationDrawer
+    private val _selectedItemIndex = mutableIntStateOf(0)
+    val selectedItemIndex: State<Int> = _selectedItemIndex
 
 
     init { getNotes() }
@@ -143,6 +150,12 @@ class NoteViewModel(
             workRequest
         )
 
+    }
+
+
+    //Methods for Drawer
+    fun setSelectedIndex(index: Int){
+        _selectedItemIndex.intValue = index
     }
 
     private suspend fun getAllNotes(): List<Note>{
