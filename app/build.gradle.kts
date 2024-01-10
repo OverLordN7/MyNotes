@@ -102,7 +102,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
 
     //Encryption
-    implementation ("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    //WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
 
 
 }

@@ -2,7 +2,6 @@ package com.overlord.mynotes.ui.screens
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,14 +11,23 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.overlord.mynotes.MyNotesApplication
 import com.overlord.mynotes.data.NoteRepository
 import com.overlord.mynotes.model.Note
+import com.overlord.mynotes.notification.NoteNotification
+import com.overlord.mynotes.notification.NotificationWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 private const val TAG = "NoteViewModel"
 
@@ -40,13 +48,28 @@ class NoteViewModel(
     //Attributes of sharedPreferences
     private val sharedPrefFileName = "my_pref_file_name"
     private val themeKey = "theme_key"
+    private val notifyKey = "notify_key"
+    private val notificationTimeKeyHours = "notification_time_key_hours"
+    private val notificationTimeKeyMinutes = "notification_time_key_minutes"
     private val sharedPreferences = application.getSharedPreferences(sharedPrefFileName, Context.MODE_PRIVATE)
 
     private val _isDarkThemeEnabled = MutableStateFlow(isDarkThemeEnabled())
     val isDarkThemeEnabled: StateFlow<Boolean> = _isDarkThemeEnabled
 
+    private val _isNotificationEnabled = MutableStateFlow(isNotificationEnabled())
+    val isNotificationEnabled: StateFlow<Boolean> = _isNotificationEnabled
+
+    private val _notificationTimeHours = MutableStateFlow(getNotificationTimeHours())
+    val notificationTimeHours: StateFlow<Int> = _notificationTimeHours
+
+    private val _notificationTimeMinutes = MutableStateFlow(getNotificationTimeMinutes())
+    val notificationTimeMinutes: StateFlow<Int> = _notificationTimeMinutes
+
 
     init { getNotes() }
+
+
+    //Settings methods
 
     private fun isDarkThemeEnabled(): Boolean{
         return sharedPreferences.getBoolean(themeKey,false)
@@ -55,6 +78,71 @@ class NoteViewModel(
     fun setDarkThemeEnabled(isEnabled: Boolean){
         _isDarkThemeEnabled.value = isEnabled
         sharedPreferences.edit().putBoolean(themeKey,isEnabled).apply()
+    }
+
+    private fun isNotificationEnabled():Boolean{
+        return sharedPreferences.getBoolean(notifyKey, false)
+    }
+
+    fun setNotificationEnabled(isEnabled: Boolean){
+        _isNotificationEnabled.value = isEnabled
+        sharedPreferences.edit().putBoolean(notifyKey, isEnabled).apply()
+    }
+
+    private fun getNotificationTimeHours(): Int{
+        return sharedPreferences.getInt(notificationTimeKeyHours,0)
+    }
+
+    fun setNotificationTimeHours(hours: Int){
+        _notificationTimeHours.value = hours
+        sharedPreferences.edit().putInt(notificationTimeKeyHours,hours).apply()
+    }
+
+    private fun getNotificationTimeMinutes(): Int{
+        return sharedPreferences.getInt(notificationTimeKeyMinutes,0)
+    }
+
+    fun setNotificationTimeMinutes(minutes: Int){
+        _notificationTimeMinutes.value = minutes
+        sharedPreferences.edit().putInt(notificationTimeKeyMinutes,minutes).apply()
+    }
+
+
+
+    fun scheduleNotificationWorker(
+        context: Context,
+        hours: Int = notificationTimeHours.value,
+        minutes: Int = notificationTimeMinutes.value
+    ){
+        val currentTimeMillis = System.currentTimeMillis()
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = currentTimeMillis
+        calendar.set(Calendar.HOUR_OF_DAY,hours)
+        calendar.set(Calendar.MINUTE, minutes)
+        calendar.set(Calendar.SECOND,0)
+
+        //if current time is gone, shift on 1 day more
+        if (calendar.timeInMillis <= currentTimeMillis){
+            calendar.add(Calendar.DAY_OF_YEAR,1)
+        }
+
+        val initialDelay = calendar.timeInMillis - currentTimeMillis
+
+        val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(
+            repeatInterval = 24,
+            repeatIntervalTimeUnit = TimeUnit.HOURS,
+            flexTimeInterval = 1,
+            flexTimeIntervalUnit = TimeUnit.HOURS
+        )
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            NotificationWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
+
     }
 
     private suspend fun getAllNotes(): List<Note>{
@@ -120,7 +208,7 @@ class NoteViewModel(
                 val noteRepository = application.container.noteRepository
                 NoteViewModel(
                     noteRepository = noteRepository,
-                    application = application
+                    application = application,
                 )
             }
         }
