@@ -3,7 +3,6 @@ package com.overlord.mynotes.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.overlord.mynotes.ui.menu.MainAppBar
@@ -74,7 +74,7 @@ fun SettingsScreen(
     val toggleTheme: (Boolean) -> Unit = { noteViewModel.setDarkThemeEnabled(it)}
 
     val isNotificationEnabled by noteViewModel.isNotificationEnabled.collectAsState()
-    val toggleNotification: (Boolean) -> Unit = {noteViewModel.setNotificationEnabled(it)}
+    val toggleNotification: (Boolean) -> Unit = { noteViewModel.setNotificationEnabled(it) }
 
     val notificationTimeHours by noteViewModel.notificationTimeHours.collectAsState()
     val toggleNotificationTimeHours: (Int) -> Unit = { noteViewModel.setNotificationTimeHours(it)}
@@ -127,9 +127,16 @@ fun SettingsScreen(
                             notificationTimeHours = notificationTimeHours,
                             notificationTimeMinutes = notificationTimeMinutes,
                             toggleNotification = toggleNotification,
-                            toggleNotificationTimeHours = toggleNotificationTimeHours,
-                            toggleNotificationTimeMinutes = toggleNotificationTimeMinutes,
-                            scheduleNotification = {noteViewModel.scheduleNotificationWorker(context)}
+                            onSubmit = {isEnabled,hours,minutes ->
+                                toggleNotificationTimeHours(hours)
+                                toggleNotificationTimeMinutes(minutes)
+                                noteViewModel.setNotification(
+                                    context = context,
+                                    isNotificationsEnabled = isEnabled,
+                                    hours = hours,
+                                    minutes = minutes
+                                )
+                            },
                         )
                     }
                 }
@@ -183,26 +190,30 @@ fun DarkModeCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationCard(
     isNotificationEnabled: Boolean,
     notificationTimeHours: Int,
     notificationTimeMinutes: Int,
-    toggleNotification: (Boolean) ->Unit,
-    toggleNotificationTimeHours: (Int) -> Unit,
-    toggleNotificationTimeMinutes: (Int) -> Unit,
-    scheduleNotification: () -> Unit,
+    toggleNotification: (Boolean) -> Unit,
+    onSubmit: (Boolean, Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ){
-
-    var isExpanded by remember { mutableStateOf(false) }
-    val timePickerState = rememberTimePickerState()
     val formattedHours = if (notificationTimeHours < 10) "0$notificationTimeHours" else "$notificationTimeHours"
     val formattedMinutes = if (notificationTimeMinutes < 10) "0$notificationTimeMinutes" else "$notificationTimeMinutes"
 
     val notificationTimeMessage = "Current notification time $formattedHours:$formattedMinutes"
 
+    //Attribute for show TimeDialog
+    val showDialog = remember { mutableStateOf(false) }
+    if (showDialog.value){
+        TimeDialog(
+            setShowDialog = {showDialog.value = it},
+            onSubmit = {hours, minutes ->
+                onSubmit(isNotificationEnabled,hours,minutes)
+            }
+        )
+    }
 
     Card(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
@@ -210,7 +221,6 @@ fun NotificationCard(
         modifier = modifier
             .padding(8.dp)
             .fillMaxWidth()
-            .height(if (isExpanded && isNotificationEnabled) 550.dp else 120.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             Row(
@@ -236,48 +246,58 @@ fun NotificationCard(
 
                 Switch(
                     checked = isNotificationEnabled,
-                    onCheckedChange = {toggleNotification(!isNotificationEnabled)},
+                    onCheckedChange = {
+                        toggleNotification(it)
+                        showDialog.value = it
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
+            Text(text = notificationTimeMessage)
+        }
+    }
+}
 
-            Row() {
-                Text(
-                    text = notificationTimeMessage,
-                    modifier = Modifier.weight(2f)
-                )
-                Spacer(modifier = Modifier.weight(0.5f))
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimeDialog(
+    setShowDialog: (Boolean) -> Unit,
+    onSubmit: (Int,Int) -> Unit,
+    modifier: Modifier = Modifier
+){
+    val timeState = rememberTimePickerState(0,0,true)
 
-                IconButton(onClick = { isExpanded = !isExpanded }) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null
-                    )
-                }
-            }
-
-            if (isNotificationEnabled && isExpanded) {
+    Dialog(onDismissRequest = {setShowDialog(false)}) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column {
                 Box(
                     modifier = modifier
                         .padding(4.dp)
-                        .weight(3f)
-                        .border(2.dp, Color.Black)
-                        .fillMaxWidth()
-                        .height(200.dp),
+                        .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ){
-                    TimePicker(state = timePickerState)
+                    TimePicker(state = timeState)
                 }
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Button(onClick = {
-                        toggleNotificationTimeHours(timePickerState.hour)
-                        toggleNotificationTimeMinutes(timePickerState.minute)
-                        scheduleNotification()
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = {setShowDialog(false)}
+                    ) {
+                        Text(text = "Cancel")
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                        onSubmit(timeState.hour,timeState.minute)
+                        setShowDialog(false)
                     }) {
-                        Text(text = "Save Time")
+                        Text(text = "Confirm")
                     }
                 }
             }
