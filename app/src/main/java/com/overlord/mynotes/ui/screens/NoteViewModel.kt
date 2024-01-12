@@ -2,12 +2,12 @@ package com.overlord.mynotes.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -15,14 +15,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.overlord.mynotes.MyNotesApplication
 import com.overlord.mynotes.data.NoteRepository
 import com.overlord.mynotes.model.Note
-import com.overlord.mynotes.notification.NoteNotification
 import com.overlord.mynotes.notification.NotificationWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,13 +112,36 @@ class NoteViewModel(
     }
 
 
+    fun cancelNotification(context: Context){
+        WorkManager.getInstance(context).cancelUniqueWork(NotificationWorker.WORK_NAME)
+    }
 
-    fun scheduleNotificationWorker(
+    fun setNotification(
+        context: Context,
+        isNotificationsEnabled: Boolean = isNotificationEnabled.value,
+        hours: Int = notificationTimeHours.value,
+        minutes: Int = notificationTimeMinutes.value
+    ){
+        if (isNotificationsEnabled){
+            //Notifications are turned on
+            Log.d(TAG, "Scheduling notification work...")
+            scheduleNotificationWorker(context, hours, minutes)
+        } else{
+            //Notifications are turned off
+            Log.d(TAG, "Cancel notification work...")
+            cancelNotification(context)
+        }
+    }
+
+
+
+    private fun scheduleNotificationWorker(
         context: Context,
         hours: Int = notificationTimeHours.value,
         minutes: Int = notificationTimeMinutes.value
     ){
         val currentTimeMillis = System.currentTimeMillis()
+
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = currentTimeMillis
         calendar.set(Calendar.HOUR_OF_DAY,hours)
@@ -138,10 +158,8 @@ class NoteViewModel(
         val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(
             repeatInterval = 24,
             repeatIntervalTimeUnit = TimeUnit.HOURS,
-            flexTimeInterval = 1,
-            flexTimeIntervalUnit = TimeUnit.HOURS
         )
-            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            //.setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -149,7 +167,6 @@ class NoteViewModel(
             ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
-
     }
 
 
