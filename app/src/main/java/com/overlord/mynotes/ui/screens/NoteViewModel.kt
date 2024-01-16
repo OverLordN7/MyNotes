@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "NoteViewModel"
@@ -113,7 +114,9 @@ class NoteViewModel(
 
 
     fun cancelNotification(context: Context){
-        WorkManager.getInstance(context).cancelUniqueWork(NotificationWorker.WORK_NAME)
+        //WorkManager.getInstance(context).cancelUniqueWork(NotificationWorker.WORK_NAME)
+        WorkManager.getInstance(context).cancelAllWorkByTag("com.overlord.mynotes.notification.NotificationWorker")
+        WorkManager.getInstance(context).cancelWorkById(UUID.fromString("7826dd9d-9a76-4888-80fa-d97c88eb1cb2"))
     }
 
     fun setNotification(
@@ -153,18 +156,14 @@ class NoteViewModel(
             calendar.add(Calendar.DAY_OF_YEAR,1)
         }
 
-        val initialDelay = calendar.timeInMillis - currentTimeMillis
-
         val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(
             repeatInterval = 24,
             repeatIntervalTimeUnit = TimeUnit.HOURS,
-        )
-            //.setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-            .build()
+        ).build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             NotificationWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             workRequest
         )
     }

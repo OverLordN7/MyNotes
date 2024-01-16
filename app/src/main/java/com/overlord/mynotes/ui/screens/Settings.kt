@@ -3,6 +3,7 @@ package com.overlord.mynotes.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -137,6 +138,7 @@ fun SettingsScreen(
                                     minutes = minutes
                                 )
                             },
+                            onDismiss = {noteViewModel.cancelNotification(context)}
                         )
                     }
                 }
@@ -197,12 +199,15 @@ fun NotificationCard(
     notificationTimeMinutes: Int,
     toggleNotification: (Boolean) -> Unit,
     onSubmit: (Boolean, Int, Int) -> Unit,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ){
     val formattedHours = if (notificationTimeHours < 10) "0$notificationTimeHours" else "$notificationTimeHours"
     val formattedMinutes = if (notificationTimeMinutes < 10) "0$notificationTimeMinutes" else "$notificationTimeMinutes"
 
     val notificationTimeMessage = "Current notification time $formattedHours:$formattedMinutes"
+
+    val context = LocalContext.current
 
     //Attribute for show TimeDialog
     val showDialog = remember { mutableStateOf(false) }
@@ -248,12 +253,16 @@ fun NotificationCard(
                     checked = isNotificationEnabled,
                     onCheckedChange = {
                         toggleNotification(it)
+
+                        if(!it){ onDismiss() }
+
                         showDialog.value = it
                     },
                     modifier = Modifier.weight(1f)
                 )
             }
             Text(text = notificationTimeMessage)
+            Text(text = "notification is $isNotificationEnabled")
         }
     }
 }

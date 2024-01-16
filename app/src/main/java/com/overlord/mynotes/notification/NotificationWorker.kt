@@ -47,7 +47,7 @@ class NotificationWorker(appContext: Context, workerParams: WorkerParameters)
         return NotificationCompat.Builder(applicationContext, "Primary Notification Channel")
             .setContentTitle(applicationContext.getString(R.string.app_name))
             .setContentText(notificationDescriptions.random())
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
     }
 

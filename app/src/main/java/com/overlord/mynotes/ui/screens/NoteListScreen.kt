@@ -296,7 +296,7 @@ fun EmptyScreen(modifier: Modifier = Modifier){
 
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier){
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
+    Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()){
         CircularProgressIndicator(modifier = Modifier.size(150.dp))
     }
 }

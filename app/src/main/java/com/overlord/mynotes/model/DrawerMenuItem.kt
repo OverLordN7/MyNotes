@@ -1,6 +1,7 @@
 package com.overlord.mynotes.model
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,6 +22,13 @@ val drawerButtons = listOf(
         title = "Home",
         contentDescription = "",
         icon = Icons.Default.Home
+    ),
+    DrawerItem(
+        id = "gpt",
+        drawerOption = Screen.GPTScreen.route,
+        title = "GPT Screen",
+        contentDescription = "",
+        icon = Icons.Default.Chat
     ),
     DrawerItem(
         id = "settings",

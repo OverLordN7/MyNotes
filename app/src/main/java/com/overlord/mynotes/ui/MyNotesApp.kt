@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.screens.DetailedNoteScreen
+import com.overlord.mynotes.ui.screens.GPTScreen
 import com.overlord.mynotes.ui.screens.NoteListScreen
 import com.overlord.mynotes.ui.screens.NoteViewModel
 import com.overlord.mynotes.ui.screens.SettingsScreen
@@ -41,6 +42,14 @@ fun MyNotesApp(){
                     noteViewModel = noteViewModel,
                 )
             }
+            //Navigate to GPT screen
+            composable(route = Screen.GPTScreen.route){
+                GPTScreen(
+                    navController = navController,
+                    noteViewModel = noteViewModel
+                )
+            }
+
 
             //Navigate to Settings screen
             composable(route = Screen.Settings.route){
