@@ -1,11 +1,11 @@
 package com.overlord.mynotes.data
 
-import android.util.Log
 import com.overlord.mynotes.model.Note
+import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 interface NoteRepository {
-    suspend fun getAllNotes(): List<Note>
+    suspend fun getAllNotes(): Flow<List<Note>>
 
     suspend fun insertNote(note: Note)
 
@@ -15,13 +15,13 @@ interface NoteRepository {
 
     suspend fun getNote(noteId: UUID): Note
 
-    suspend fun searchNotes(searchQuery: String): List<Note>
+    fun searchNotes(searchQuery: String): Flow<List<Note>>
 }
 
 class DefaultNoteRepository(
     private val noteDao: NoteDao,
 ): NoteRepository{
-    override suspend fun getAllNotes(): List<Note> {
+    override suspend fun getAllNotes(): Flow<List<Note>> {
         return noteDao.getAllNotes()
     }
 
@@ -46,7 +46,7 @@ class DefaultNoteRepository(
         return noteDao.getNote(noteId)
     }
 
-    override suspend fun searchNotes(searchQuery: String): List<Note> {
+    override fun searchNotes(searchQuery: String): Flow<List<Note>> {
         return noteDao.searchNotes("%$searchQuery%")
     }
 }

@@ -34,6 +34,7 @@ fun MainAppBar(
     drawerState: DrawerState,
     isSearchEnabled: Boolean = false,
     onSearch: (Boolean) -> Unit = {},
+    onSearchCleared: () -> Unit = {}
 ){
     val title = stringResource(id = R.string.app_name)
 
@@ -54,6 +55,9 @@ fun MainAppBar(
                 IconButton(onClick = {
                     isSearchButtonPressed = !isSearchButtonPressed
                     onSearch(isSearchButtonPressed)
+                    if (!isSearchButtonPressed) {
+                        onSearchCleared()
+                    }
                 }) {
                     Icon(
                         imageVector = if (!isSearchButtonPressed) Icons.Default.Search else Icons.Default.Clear,

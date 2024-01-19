@@ -5,11 +5,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.overlord.mynotes.model.Note
+import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 @Dao
 interface NoteDao {
     @Query("SELECT * FROM notes")
-    fun getAllNotes(): List<Note>
+    fun getAllNotes(): Flow<List<Note>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addNote(note: Note)
@@ -27,5 +28,5 @@ interface NoteDao {
     fun getNote(noteId: UUID): Note
 
     @Query("SELECT * FROM notes WHERE title LIKE :searchQuery OR description LIKE :searchQuery")
-    suspend fun searchNotes(searchQuery: String): List<Note>
+    fun searchNotes(searchQuery: String): Flow<List<Note>>
 }

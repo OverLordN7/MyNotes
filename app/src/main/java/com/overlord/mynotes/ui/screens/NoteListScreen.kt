@@ -40,6 +40,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -51,17 +53,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.NavController
 import com.overlord.mynotes.model.Note
 import com.overlord.mynotes.navigation.Screen
 import com.overlord.mynotes.ui.menu.MainAppBar
 import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -86,6 +94,8 @@ fun NoteListScreen(
     //Search attribute
     var isSearchEnabled by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
     ModalNavigationDrawer(
         drawerContent = {
             NoteModalDrawerSheet(
@@ -104,7 +114,11 @@ fun NoteListScreen(
                 scope = scope,
                 drawerState = drawerState,
                 isSearchEnabled = true,
-                onSearch = { isSearchEnabled = it }
+                onSearch = { isSearchEnabled = it },
+                onSearchCleared = {
+                    isSearchEnabled = false
+                    noteViewModel.resetSearch()
+                }
             )},
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
@@ -132,7 +146,7 @@ fun NoteListScreen(
                     is NotesUIState.Error ->{}
                     is NotesUIState.Success ->{
                         NoteGridView(
-                            notesList = state.notesList,
+                            notesList = state.notesList.collectAsState(initial = emptyList()).value,
                             isSearchEnabled = isSearchEnabled,
                             onClick = {  note ->
                                 noteViewModel.currentNote = note
@@ -144,7 +158,13 @@ fun NoteListScreen(
                                     noteViewModel.deleteNote(note)
                                 }
                             },
-                            onSearch = {query ->},
+                            onSearch = {query ->
+                                       /*TODO add dynamic search*/
+                                       noteViewModel.searchNotes(query)
+                            },
+                            onSearchCleared = {
+                                noteViewModel.resetSearch()
+                            }
                         )
                     }
                 }
@@ -159,6 +179,7 @@ fun NoteGridView(
     onClick: (Note) -> Unit,
     onDeleteList: (List<Note>) -> Unit,
     onSearch: (String) -> Unit,
+    onSearchCleared: () -> Unit,
     modifier: Modifier = Modifier
 ){
     //Tool panel attribute
@@ -191,6 +212,7 @@ fun NoteGridView(
             AnimatedVisibility(visible = isSearchEnabled) {
                 SearchCard(
                     onSearch = { onSearch(it) },
+                    onSearchCleared = onSearchCleared
                 )
             }
 
@@ -331,9 +353,15 @@ fun LoadingScreen(modifier: Modifier = Modifier){
 @Composable
 fun SearchCard(
     onSearch: (String) -> Unit,
+    onSearchCleared: () -> Unit,
     modifier: Modifier = Modifier
 ){
     var searchText by remember {mutableStateOf(TextFieldValue(""))}
+
+    LaunchedEffect(searchText.text) {
+        delay(300)
+        onSearch(searchText.text)
+    }
 
     Card(
         elevation = CardDefaults.cardElevation(8.dp),
@@ -364,6 +392,11 @@ fun SearchCard(
                         onSearch(searchText.text)
                     }
                     /*TODO clear search query*/
+                },
+                onDone = {
+                    if (searchText.text.isBlank()) {
+                        onSearchCleared()
+                    }
                 }
             ),
             modifier = Modifier

@@ -22,8 +22,12 @@ import com.overlord.mynotes.data.NoteRepository
 import com.overlord.mynotes.model.Note
 import com.overlord.mynotes.notification.NotificationWorker
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
@@ -33,7 +37,7 @@ import java.util.concurrent.TimeUnit
 private const val TAG = "NoteViewModel"
 
 sealed interface NotesUIState{
-    data class Success(var notesList: List<Note>): NotesUIState
+    data class Success(var notesList: Flow<List<Note>>): NotesUIState
     data class Error(var errorMessage: Exception): NotesUIState
     object Loading: NotesUIState
 }
@@ -184,11 +188,19 @@ class NoteViewModel(
         _selectedItemIndex.intValue = index
     }
 
-    private suspend fun getAllNotes(): List<Note>{
-        return withContext(Dispatchers.IO){
-            val unsortedNotes = noteRepository.getAllNotes()
-            return@withContext unsortedNotes.sortedBy { it.creationTimeMillis }.reversed()
-        }
+//    private suspend fun getAllNotes(): List<Note>{
+//        return withContext(Dispatchers.IO){
+//            val unsortedNotes = noteRepository.getAllNotes()
+//            return@withContext unsortedNotes.sortedBy { it.creationTimeMillis }.reversed()
+//        }
+//    }
+
+    private suspend fun getAllNotes(): Flow<List<Note>> {
+        return noteRepository.getAllNotes()
+            .map { unsortedNotes ->
+                unsortedNotes.sortedBy { it.creationTimeMillis }.reversed()
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     //Methods for Notes
@@ -241,6 +253,25 @@ class NoteViewModel(
             context.startActivity(Intent.createChooser(intent,"Share note with:"))
         }
     }
+
+    fun searchNotes(query: String) {
+        viewModelScope.launch {
+            notesUIState = NotesUIState.Loading
+            notesUIState = try {
+                val searchResult = noteRepository.searchNotes(query)
+                NotesUIState.Success(searchResult)
+            } catch (e: Exception) {
+                NotesUIState.Error(e)
+            }
+        }
+    }
+
+    fun resetSearch() {
+        viewModelScope.launch {
+            getNotes() // Load all notes
+        }
+    }
+
     companion object{
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
