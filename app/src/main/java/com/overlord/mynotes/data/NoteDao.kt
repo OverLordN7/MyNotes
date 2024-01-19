@@ -25,4 +25,7 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE id = CAST(:noteId AS BLOB)")
     fun getNote(noteId: UUID): Note
+
+    @Query("SELECT * FROM notes WHERE title LIKE :searchQuery OR description LIKE :searchQuery")
+    suspend fun searchNotes(searchQuery: String): List<Note>
 }

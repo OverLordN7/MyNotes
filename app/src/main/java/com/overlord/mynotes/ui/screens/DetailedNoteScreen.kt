@@ -1,11 +1,13 @@
 package com.overlord.mynotes.ui.screens
 
+import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +25,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,6 +42,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,11 +70,16 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -80,6 +90,7 @@ import com.overlord.mynotes.ui.menu.NoteModalDrawerSheet
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.min
 
 private const val TAG = "DetailedNoteScreen"
 @Composable
@@ -135,7 +146,8 @@ fun DetailedNoteScreen(
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onShare = {noteViewModel.shareNote(note,context)}
+                    onShare = {noteViewModel.shareNote(note,context)},
+                    onSearch = {},
                 )
             }
         }
@@ -149,6 +161,7 @@ fun DetailedNoteView(
     onSave: (Note) -> Unit,
     onBack: () -> Unit,
     onShare: (Note) -> Unit,
+    onSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -174,6 +187,12 @@ fun DetailedNoteView(
 
     val imeState = rememberImeState()
     val scrollState = rememberScrollState()
+
+    val context = LocalContext.current
+
+    //Search Attributes
+    var searchQuery by remember { mutableStateOf("") }
+    var highlightedText by remember{ mutableStateOf<AnnotatedString>(AnnotatedString(text ?: "")) }
 
     LaunchedEffect(imeState.value){
         if (imeState.value){
@@ -207,8 +226,37 @@ fun DetailedNoteView(
                         isDescriptionModified = false
                     }
                 )
+
+//                IconButton(onClick = { /*TODO*/ }) {
+//                    Icon(
+//                        imageVector = Icons.Default.Search,
+//                        contentDescription = null,
+//                        modifier = Modifier.size(40.dp)
+//                    )
+//                }
             }
         }
+
+//        SearchCard(
+//            onSearch = {query ->
+//                Toast.makeText(context,query,Toast.LENGTH_SHORT).show()
+//
+//                val highlighted = buildAnnotatedString {
+//                    val startIndex = text?.indexOf(query, ignoreCase = true) ?: -1
+//                    if (startIndex != -1 && text != null) {
+//                        append(text!!.substring(0, min(startIndex, text!!.length)))
+//                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+//                            val endIndex = min(startIndex + query.length, text!!.length)
+//                            append(text!!.substring(startIndex, endIndex))
+//                        }
+//                        append(text!!.substring(min(startIndex + query.length, text!!.length)))
+//                    } else {
+//                        append(text ?: "")
+//                    }
+//                }
+//                highlightedText = highlighted
+//            }
+//        )
 
         //Main Body
         Card(modifier = modifier.padding(4.dp)) {
@@ -329,6 +377,20 @@ fun DetailedNoteView(
                         }
                         .weight(6f)
                 )
+
+                //Test
+//                Box(
+//                    contentAlignment = Alignment.BottomEnd,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(4.dp)
+//                ) {
+//                    Text(
+//                        text = highlightedText,
+//                        modifier = Modifier.background(Color.Yellow), // Замените на нужный вам стиль выделения
+//                        fontStyle = FontStyle.Italic
+//                    )
+//                }
 
                 Box(
                     contentAlignment = Alignment.BottomEnd,

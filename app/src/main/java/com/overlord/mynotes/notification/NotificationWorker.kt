@@ -27,8 +27,6 @@ class NotificationWorker(appContext: Context, workerParams: WorkerParameters)
 
 
     override fun doWork(): Result {
-        //val noteNotification = NoteNotification(applicationContext)
-        //val notificationManager = noteNotification.provideNotificationManager()
         if (ActivityCompat.checkSelfPermission(
                 applicationContext,
                 Manifest.permission.POST_NOTIFICATIONS
@@ -37,13 +35,10 @@ class NotificationWorker(appContext: Context, workerParams: WorkerParameters)
             Toast.makeText(applicationContext,"Access to Notifications not Granted", Toast.LENGTH_LONG).show()
         }
         provideNotificationManager().notify(1,provideNotificationBuilder().build())
-
-        //notificationManager.notify(1, noteNotification.provideNotificationBuilder().build() )
-
         return Result.success()
     }
 
-    fun provideNotificationBuilder(): NotificationCompat.Builder{
+    private fun provideNotificationBuilder(): NotificationCompat.Builder{
         return NotificationCompat.Builder(applicationContext, "Primary Notification Channel")
             .setContentTitle(applicationContext.getString(R.string.app_name))
             .setContentText(notificationDescriptions.random())
@@ -51,7 +46,7 @@ class NotificationWorker(appContext: Context, workerParams: WorkerParameters)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
     }
 
-    fun provideNotificationManager(): NotificationManagerCompat {
+    private fun provideNotificationManager(): NotificationManagerCompat {
         val notificationManager = NotificationManagerCompat.from(applicationContext)
         val channel = NotificationChannel(
             "Primary Notification Channel",

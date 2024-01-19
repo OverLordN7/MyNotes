@@ -1,5 +1,6 @@
 package com.overlord.mynotes.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -16,8 +17,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +37,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,10 +47,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -74,6 +83,9 @@ fun NoteListScreen(
     val scope = rememberCoroutineScope()
     val selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
+    //Search attribute
+    var isSearchEnabled by remember { mutableStateOf(false) }
+
     ModalNavigationDrawer(
         drawerContent = {
             NoteModalDrawerSheet(
@@ -88,7 +100,12 @@ fun NoteListScreen(
     ) {
 
         Scaffold (
-            topBar = { MainAppBar(scope = scope, drawerState = drawerState) },
+            topBar = { MainAppBar(
+                scope = scope,
+                drawerState = drawerState,
+                isSearchEnabled = true,
+                onSearch = { isSearchEnabled = it }
+            )},
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
                 FloatingActionButton(onClick = {
@@ -116,6 +133,7 @@ fun NoteListScreen(
                     is NotesUIState.Success ->{
                         NoteGridView(
                             notesList = state.notesList,
+                            isSearchEnabled = isSearchEnabled,
                             onClick = {  note ->
                                 noteViewModel.currentNote = note
                                 noteViewModel.isNewNote = false
@@ -125,7 +143,8 @@ fun NoteListScreen(
                                 list.forEach { note->
                                     noteViewModel.deleteNote(note)
                                 }
-                            }
+                            },
+                            onSearch = {query ->},
                         )
                     }
                 }
@@ -136,8 +155,10 @@ fun NoteListScreen(
 @Composable
 fun NoteGridView(
     notesList: List<Note>,
+    isSearchEnabled: Boolean,
     onClick: (Note) -> Unit,
     onDeleteList: (List<Note>) -> Unit,
+    onSearch: (String) -> Unit,
     modifier: Modifier = Modifier
 ){
     //Tool panel attribute
@@ -165,6 +186,12 @@ fun NoteGridView(
                         }
                     }
                 }
+            }
+
+            AnimatedVisibility(visible = isSearchEnabled) {
+                SearchCard(
+                    onSearch = { onSearch(it) },
+                )
             }
 
             LazyVerticalGrid(
@@ -298,5 +325,50 @@ fun EmptyScreen(modifier: Modifier = Modifier){
 fun LoadingScreen(modifier: Modifier = Modifier){
     Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()){
         CircularProgressIndicator(modifier = Modifier.size(150.dp))
+    }
+}
+
+@Composable
+fun SearchCard(
+    onSearch: (String) -> Unit,
+    modifier: Modifier = Modifier
+){
+    var searchText by remember {mutableStateOf(TextFieldValue(""))}
+
+    Card(
+        elevation = CardDefaults.cardElevation(8.dp),
+        shape = RoundedCornerShape(0.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(4.dp)
+    ){
+        TextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            singleLine = true,
+            placeholder = { Text(text = "what to search?")},
+            trailingIcon = {
+                IconButton(onClick = { searchText = TextFieldValue("") }) {
+                    Icon(imageVector = Icons.Default.Clear, contentDescription = null)
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                autoCorrect = true,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+
+                    if (searchText.text.isNotBlank()){
+                        onSearch(searchText.text)
+                    }
+                    /*TODO clear search query*/
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp)
+        )
     }
 }

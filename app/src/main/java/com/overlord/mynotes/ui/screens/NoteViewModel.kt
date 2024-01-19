@@ -70,12 +70,24 @@ class NoteViewModel(
     private val _selectedItemIndex = mutableIntStateOf(0)
     val selectedItemIndex: State<Int> = _selectedItemIndex
 
+    //Search attributes
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
 
-    init { getNotes() }
+
+    init {
+        //getNotes()
+
+        viewModelScope.launch {
+            searchQuery.collect{query->
+                Log.d(TAG, "query changed now is: $query")
+                getNotes()
+            }
+        }
+    }
 
 
     //Settings methods
-
     private fun isDarkThemeEnabled(): Boolean{
         return sharedPreferences.getBoolean(themeKey,false)
     }
@@ -112,9 +124,7 @@ class NoteViewModel(
         sharedPreferences.edit().putInt(notificationTimeKeyMinutes,minutes).apply()
     }
 
-
     fun cancelNotification(context: Context){
-        //WorkManager.getInstance(context).cancelUniqueWork(NotificationWorker.WORK_NAME)
         WorkManager.getInstance(context).cancelAllWorkByTag("com.overlord.mynotes.notification.NotificationWorker")
         WorkManager.getInstance(context).cancelWorkById(UUID.fromString("7826dd9d-9a76-4888-80fa-d97c88eb1cb2"))
     }
@@ -181,7 +191,9 @@ class NoteViewModel(
         }
     }
 
-    private fun getNotes(){
+    //Methods for Notes
+
+    fun getNotes(){
         viewModelScope.launch {
             notesUIState = NotesUIState.Loading
             notesUIState = try{
@@ -229,7 +241,6 @@ class NoteViewModel(
             context.startActivity(Intent.createChooser(intent,"Share note with:"))
         }
     }
-
     companion object{
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

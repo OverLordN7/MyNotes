@@ -14,6 +14,8 @@ interface NoteRepository {
     suspend fun deleteNote(note: Note)
 
     suspend fun getNote(noteId: UUID): Note
+
+    suspend fun searchNotes(searchQuery: String): List<Note>
 }
 
 class DefaultNoteRepository(
@@ -42,5 +44,9 @@ class DefaultNoteRepository(
 
     override suspend fun getNote(noteId: UUID): Note {
         return noteDao.getNote(noteId)
+    }
+
+    override suspend fun searchNotes(searchQuery: String): List<Note> {
+        return noteDao.searchNotes("%$searchQuery%")
     }
 }

@@ -1,17 +1,25 @@
 package com.overlord.mynotes.ui.menu
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.overlord.mynotes.R
@@ -24,8 +32,12 @@ import kotlinx.coroutines.launch
 fun MainAppBar(
     scope: CoroutineScope,
     drawerState: DrawerState,
+    isSearchEnabled: Boolean = false,
+    onSearch: (Boolean) -> Unit = {},
 ){
     val title = stringResource(id = R.string.app_name)
+
+    var isSearchButtonPressed by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = { Text(text = title, color = Color.White) },
@@ -36,6 +48,20 @@ fun MainAppBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary
-        )
+        ),
+        actions = {
+            if (isSearchEnabled){
+                IconButton(onClick = {
+                    isSearchButtonPressed = !isSearchButtonPressed
+                    onSearch(isSearchButtonPressed)
+                }) {
+                    Icon(
+                        imageVector = if (!isSearchButtonPressed) Icons.Default.Search else Icons.Default.Clear,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
     )
 }

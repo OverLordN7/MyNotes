@@ -24,13 +24,6 @@ val drawerButtons = listOf(
         icon = Icons.Default.Home
     ),
     DrawerItem(
-        id = "gpt",
-        drawerOption = Screen.GPTScreen.route,
-        title = "GPT Screen",
-        contentDescription = "",
-        icon = Icons.Default.Chat
-    ),
-    DrawerItem(
         id = "settings",
         drawerOption = Screen.Settings.route,
         title = "Settings",

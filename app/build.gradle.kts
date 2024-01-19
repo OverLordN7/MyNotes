@@ -108,12 +108,16 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     //Internet
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.9.1")
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
 
     //Coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+
+    //GPT client
+    implementation ("com.aallam.openai:openai-client:3.0.0")
+    implementation ("io.ktor:ktor-client-android:2.2.4")
 
 }
