@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FabPosition
@@ -300,6 +301,10 @@ fun Note(
                                     checkboxValue.value = it
                                     onCheckBoxChange(note)
                                 },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color.Transparent,
+                                    uncheckedColor = MaterialTheme.colorScheme.onPrimary
+                                ),
                                 modifier = Modifier
                                     .size(20.dp)
                                     .weight(0.5f)

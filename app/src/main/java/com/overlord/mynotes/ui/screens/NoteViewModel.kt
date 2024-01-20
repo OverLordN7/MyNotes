@@ -258,7 +258,10 @@ class NoteViewModel(
         viewModelScope.launch {
             notesUIState = NotesUIState.Loading
             notesUIState = try {
-                val searchResult = noteRepository.searchNotes(query)
+                val searchResult = noteRepository.searchNotes(query).map { unsortedNotes ->
+                    unsortedNotes.sortedBy { it.creationTimeMillis }.reversed()
+                }.flowOn(Dispatchers.Default)
+
                 NotesUIState.Success(searchResult)
             } catch (e: Exception) {
                 NotesUIState.Error(e)
